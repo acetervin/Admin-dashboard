@@ -19,32 +19,19 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await apiRequest("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
+      const response = await apiRequest("POST", "/api/auth/login", { username, password });
+      
+      const result = await response.json();
+      
+      toast({
+        title: "Success",
+        description: "Login successful",
       });
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Login successful",
-        });
-        navigate("/admin/dashboard");
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Error",
-          description: error.error || "Login failed",
-          variant: "destructive",
-        });
-      }
+      navigate("/admin/dashboard");
     } catch (error) {
       toast({
         title: "Error",
-        description: "An error occurred during login",
+        description: error instanceof Error ? error.message : "Login failed",
         variant: "destructive",
       });
     } finally {

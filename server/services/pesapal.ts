@@ -107,7 +107,7 @@ export class PesapalService {
     const data: PesapalAuthResponse = await response.json();
     
     if (data.error) {
-      throw new Error(`Pesapal auth error: ${data.error.message}`);
+      throw new Error(`Pesapal auth error: ${data.error.message || data.error}`);
     }
 
     // Save token to database
