@@ -123,6 +123,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   email: true,
+  role: true,
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -133,17 +134,15 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 
 export const insertDonationSchema = createInsertSchema(donations).omit({
   id: true,
-  transactionId: true,
-  createdAt: true,
-});
-
-export const insertEventRegistrationSchema = createInsertSchema(eventRegistrations).omit({
-  id: true,
-  transactionId: true,
   createdAt: true,
 });
 
 export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEventRegistrationSchema = createInsertSchema(eventRegistrations).omit({
   id: true,
   createdAt: true,
 });

@@ -12,9 +12,79 @@ import {
 import { z } from "zod";
 import { nanoid } from "nanoid";
 
+// Session type extensions
+declare global {
+  namespace Express {
+    interface SessionData {
+      userId?: number;
+      role?: string;
+    }
+  }
+}
+
+// Create default admin user
+async function createDefaultAdmin() {
+  try {
+    const existingAdmin = await storage.getUserByUsername("admin");
+    if (!existingAdmin) {
+      await storage.createUser({
+        username: "admin",
+        email: "admin@familypeace.org",
+        password: "admin123", // Change this in production
+        role: "admin"
+      });
+      console.log("Default admin user created: admin/admin123");
+    }
+  } catch (error) {
+    console.error("Error creating default admin:", error);
+  }
+}
+
+// Create sample events
+async function createSampleEvents() {
+  try {
+    const existingEvents = await storage.getActiveEvents();
+    if (existingEvents.length === 0) {
+      await storage.createEvent({
+        name: "Family Counseling Workshop",
+        description: "Learn effective communication skills for stronger family relationships",
+        date: new Date("2025-02-15T10:00:00Z"),
+        endTime: new Date("2025-02-15T16:00:00Z"),
+        location: "Family Peace Foundation Center, Nairobi",
+        maxParticipants: 50,
+        registrationFee: "2500",
+        isActive: true,
+        imageUrl: null
+      });
+      
+      await storage.createEvent({
+        name: "Youth Empowerment Summit",
+        description: "Empowering young people with life skills and career guidance",
+        date: new Date("2025-03-10T09:00:00Z"),
+        endTime: new Date("2025-03-10T17:00:00Z"),
+        location: "Kenyatta International Conference Centre",
+        maxParticipants: 100,
+        registrationFee: "1500",
+        isActive: true,
+        imageUrl: null
+      });
+      
+      console.log("Sample events created successfully");
+    }
+  } catch (error) {
+    console.error("Error creating sample events:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Pesapal IPN URL
   await pesapalService.initializeIpnUrl();
+  
+  // Create default admin user if doesn't exist
+  await createDefaultAdmin();
+  
+  // Create sample events
+  await createSampleEvents();
 
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
@@ -27,7 +97,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Simple session-based auth
-      req.session = { ...req.session, userId: user.id, role: user.role };
+      req.session.userId = user.id;
+      req.session.role = user.role;
       
       res.json({ 
         user: { 
@@ -43,8 +114,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    req.session = null;
-    res.json({ success: true });
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Failed to logout" });
+      }
+      res.json({ success: true });
+    });
   });
 
   app.get("/api/auth/me", (req, res) => {

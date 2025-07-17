@@ -1,108 +1,102 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { login } from "@/lib/auth";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AdminLogin() {
-  const [, setLocation] = useLocation();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: "",
-  });
 
-  const loginMutation = useMutation({
-    mutationFn: (data: { username: string; password: string }) => 
-      login(data.username, data.password),
-    onSuccess: (user) => {
-      if (user.role === "admin") {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await apiRequest("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
         toast({
-          title: "Login Successful",
-          description: "Welcome to the admin dashboard",
+          title: "Success",
+          description: "Login successful",
         });
-        setLocation("/admin/dashboard");
+        navigate("/admin/dashboard");
       } else {
+        const error = await response.json();
         toast({
-          title: "Access Denied",
-          description: "Admin privileges required",
+          title: "Error",
+          description: error.error || "Login failed",
           variant: "destructive",
         });
       }
-    },
-    onError: () => {
+    } catch (error) {
       toast({
-        title: "Login Failed",
-        description: "Invalid username or password",
+        title: "Error",
+        description: "An error occurred during login",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    loginMutation.mutate(credentials);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-      <div className="w-full max-w-md mx-4">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-hand-holding-heart text-white text-2xl"></i>
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">Admin Login</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="admin123"
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+          <div className="mt-4 text-sm text-center text-neutral-600">
+            <p>Default credentials:</p>
+            <p>Username: admin</p>
+            <p>Password: admin123</p>
           </div>
-          <h1 className="text-2xl font-bold text-neutral-800">Family Peace Foundation</h1>
-          <p className="text-neutral-600">Admin Portal</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={credentials.username}
-                  onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                  required
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? "Signing In..." : "Sign In"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="text-center mt-6 text-sm text-neutral-500">
-          <p>For demo purposes, use:</p>
-          <p>Username: admin, Password: admin</p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

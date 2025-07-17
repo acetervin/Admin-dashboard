@@ -76,8 +76,8 @@ export class PesapalService {
       ? "https://pay.pesapal.com/v3/api"
       : "https://cybqa.pesapal.com/pesapalv3/api";
     
-    this.consumerKey = process.env.PESAPAL_CONSUMER_KEY || process.env.VITE_PESAPAL_CONSUMER_KEY || "demo_key";
-    this.consumerSecret = process.env.PESAPAL_CONSUMER_SECRET || process.env.VITE_PESAPAL_CONSUMER_SECRET || "demo_secret";
+    this.consumerKey = process.env.PESAPAL_CONSUMER_KEY || "9fBwia4RHN0JpKyPLFQKoondEdKZWwuf";
+    this.consumerSecret = process.env.PESAPAL_CONSUMER_SECRET || "hGgZzqtmKvcr/oVDAc46/6PCaGs=";
   }
 
   async getAccessToken(): Promise<string> {
